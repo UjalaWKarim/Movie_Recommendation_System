@@ -5,3 +5,10 @@ matplotlib
 seaborn
 scikit-learn
 requests
+streamlit
+pandas
+numpy
+matplotlib
+seaborn
+scikit-learn
+requests
