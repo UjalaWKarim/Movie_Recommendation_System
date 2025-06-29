@@ -1,17 +1,12 @@
-# --- Imports ---
 import streamlit as st
-import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from recommender import load_data, hybrid_recommend, get_movie_poster, render_movie_card, tfidf
+import recommender
 
-# --- Page config ---
 st.set_page_config(layout="centered")
+movies, ratings = recommender.movies, recommender.ratings
+tfidf = recommender.tfidf
 
-# --- Data ---
-movies, ratings = load_data()
-
-# --- UI ---
 st.title("🎬 Hybrid Movie Recommendation System")
 
 valid_users = ratings['UserID'].unique()
@@ -20,6 +15,7 @@ user_id = st.number_input("👤 Enter User ID:", min_value=int(min(valid_users))
 
 recent_rated = ratings[ratings['UserID'] == user_id].merge(movies, on='MovieID')
 recent_rated = recent_rated.sort_values(by='Timestamp', ascending=False).head(5)
+
 st.markdown("**🎥 Recently Rated Movies:**")
 row_count = 3
 for i in range(0, len(recent_rated), row_count):
@@ -27,8 +23,8 @@ for i in range(0, len(recent_rated), row_count):
     cols = st.columns(row_count)
     for j, (_, movie) in enumerate(row.iterrows()):
         with cols[j]:
-            poster = get_movie_poster(movie['Title'])
-            st.markdown(render_movie_card(poster, movie['Title'], movie['Genres']), unsafe_allow_html=True)
+            poster = recommender.get_movie_poster(movie['Title'])
+            st.markdown(recommender.render_movie_card(poster, movie['Title'], movie['Genres'], movie['Rating']), unsafe_allow_html=True)
 
 with st.expander("📊 User Insights"):
     genre_data = recent_rated['Genres'].str.split('|').explode().value_counts().head(10)
@@ -63,7 +59,7 @@ alpha = {
 }[strategy]
 
 if st.button("🔍 Get Recommendations"):
-    results = hybrid_recommend(user_id, movie_title, alpha=alpha, top_n=10)
+    results = recommender.hybrid_recommend(user_id, movie_title, top_n=10, alpha=alpha)
 
     if selected_genre != 'All':
         results = results[results['Genres'].str.contains(selected_genre)]
@@ -77,4 +73,4 @@ if st.button("🔍 Get Recommendations"):
             cols = st.columns(row_count)
             for j, (_, movie) in enumerate(row.iterrows()):
                 with cols[j]:
-                    st.markdown(render_movie_card(movie['Poster'], movie['Title'], movie['Genres']), unsafe_allow_html=True)
+                    st.markdown(recommender.render_movie_card(movie['Poster'], movie['Title'], movie['Genres']), unsafe_allow_html=True)
